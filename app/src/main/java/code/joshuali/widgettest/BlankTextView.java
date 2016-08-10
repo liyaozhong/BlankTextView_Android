@@ -13,6 +13,7 @@ import android.view.View;
 import android.util.AttributeSet;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by joshuali on 16/8/10.
@@ -94,7 +95,7 @@ public class BlankTextView extends View {
                     calWidth = this.getWidth();
                     if(width > this.getWidth()){
                         StaticLayout staticLayout = new StaticLayout(blank.content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
-                        rectF = new RectF(0, calTop - singleLineHeight / 3 * 2, this.getWidth(), calTop - singleLineHeight / 3 * 2 + staticLayout.getHeight());
+                        rectF = new RectF(0, calTop - singleLineHeight / 3 * 2, this.getWidth(), calTop - singleLineHeight + staticLayout.getHeight());
                         for (int line = 0; line < staticLayout.getLineCount(); line++) {
                             canvas.drawText(blank.content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
                                     staticLayout.getLineTop(line) + calTop, textPaint);
@@ -159,7 +160,7 @@ public class BlankTextView extends View {
             BlankItem blank = this.blankRects.get(i);
             if(blank.rectf.contains(x, y)){
                 if(blank.content == null){
-                    blank.content = x+","+y+""+x;
+                    blank.content = new Random().nextInt()%3 == 0 ? x+","+y+""+x : x+"";
                 }else{
                     blank.content = null;
                 }
