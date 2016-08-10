@@ -65,7 +65,7 @@ public class BlankTextView extends View {
         linePaint.setColor(Color.BLACK);
         linePaint.setStyle(Paint.Style.STROKE);
         TextPaint textPaint = new TextPaint();
-        textPaint.setTextSize(40);
+        textPaint.setTextSize(80);
         textPaint.drawableState = getDrawableState();
         float calWidth = this.getWidth();
         float calTop = 100;
@@ -92,11 +92,12 @@ public class BlankTextView extends View {
                         rectF = new RectF(0, calTop - singleLineHeight / 3 * 2, this.getWidth(), calTop - singleLineHeight / 3 * 2 + staticLayout.getHeight());
                     }else {
                         rectF = new RectF(this.getWidth() - calWidth, calTop - singleLineHeight / 3 * 2, this.getWidth() - calWidth + width, calTop);
+                        calWidth -= width;
                     }
                 }else{
                     rectF = new RectF(this.getWidth() - calWidth, calTop - singleLineHeight/3*2, this.getWidth() - calWidth + width, calTop);
+                    calWidth -= width;
                 }
-                calWidth -= width;
                 canvas.drawText(blank.content, rectF.left,
                         rectF.bottom, textPaint);
             }
@@ -148,7 +149,7 @@ public class BlankTextView extends View {
             BlankItem blank = this.blankRects.get(i);
             if(blank.rectf.contains(x, y)){
                 if(blank.content == null){
-                    blank.content = x+","+y;
+                    blank.content = x+","+y+"";
                 }else{
                     blank.content = null;
                 }
