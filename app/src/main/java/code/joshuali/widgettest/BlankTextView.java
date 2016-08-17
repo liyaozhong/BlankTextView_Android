@@ -35,6 +35,11 @@ public class BlankTextView extends View {
     private ArrayList<String> array = new ArrayList<String>();
     private ArrayList<BlankItem> blankRects = new ArrayList<BlankItem>();
 
+    private float lineSpacing;
+    private float leftPadding, rightPadding;
+    float topMargin = 100;
+    float blankWidth = 150;
+
     public BlankTextView(Context context) {
         super(context);
         this.setup();
@@ -62,11 +67,18 @@ public class BlankTextView extends View {
         array.add("22211");
         array.add("sdv11");
         array.add("dfwefwef11");
+        lineSpacing = 20;
+        leftPadding = 20;
+        rightPadding = 20;
         for (int index = 0; index < array.size(); index++) {
             BlankItem blank = new BlankItem();
             blank.content = null;
             blankRects.add(blank);
         }
+    }
+
+    private float getActualWidth(){
+        return this.getWidth() - leftPadding - rightPadding;
     }
 
     @Override
@@ -80,14 +92,11 @@ public class BlankTextView extends View {
         TextPaint textPaint = new TextPaint();
         textPaint.setTextSize(40);
         textPaint.drawableState = getDrawableState();
-        float calWidth = this.getWidth();
-        float topMargin = 100;
-        float blankWidth = 150;
+        float calWidth = this.getActualWidth();
+
         float calTop = topMargin;
         Paint.FontMetrics fm = textPaint.getFontMetrics();
 
-//        StaticLayout singleLineLayout = new StaticLayout("A", textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
-//        float singleLineHeight = singleLineLayout.getHeight();
         float singleLineHeight = fm.descent - fm.ascent;
         for (int index = 0; index < array.size(); index++) {
             BlankItem blank = blankRects.get(index);
@@ -95,39 +104,41 @@ public class BlankTextView extends View {
             ArrayList<TextHolder> textHolders = new ArrayList<TextHolder>();
             if(blank.content == null){
                 if (calWidth < blankWidth) {
-                    if(calTop > topMargin || calWidth < this.getWidth()){
-                        calTop += singleLineHeight;
+                    if(calTop > topMargin || calWidth < this.getActualWidth()){
+                        calTop += singleLineHeight + lineSpacing;
                     }
-                    calWidth = this.getWidth();
+                    calWidth = this.getActualWidth();
                 }
-                rectF = new RectF(this.getWidth() - calWidth, calTop + fm.ascent,
-                        this.getWidth() - calWidth + blankWidth, calTop + fm.descent);
+                rectF = new RectF(this.getActualWidth() - calWidth, calTop + fm.ascent,
+                        this.getActualWidth() - calWidth + blankWidth, calTop + fm.descent);
                 calWidth -= blankWidth;
             }else{
                 float width = StaticLayout.getDesiredWidth(blank.content, textPaint);
                 if(calWidth < width){
-                    if(calTop > topMargin || calWidth < this.getWidth()){
-                        calTop += singleLineHeight;
+                    if(calTop > topMargin || calWidth < this.getActualWidth()){
+                        calTop += singleLineHeight + lineSpacing;
                     }
-                    calWidth = this.getWidth();
-                    if(width > this.getWidth()){
-                        StaticLayout staticLayout = new StaticLayout(blank.content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
-                        rectF = new RectF(0, calTop + fm.ascent,
-                                this.getWidth(), calTop + fm.ascent + staticLayout.getHeight());
+                    calWidth = this.getActualWidth();
+                    if(width > this.getActualWidth()){
+                        StaticLayout staticLayout = new StaticLayout(blank.content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
+                        float lastLine = 0;
                         for (int line = 0; line < staticLayout.getLineCount(); line++) {
                             textHolders.add(new TextHolder(blank.content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
                                     staticLayout.getLineTop(line) + calTop));
+                            lastLine = staticLayout.getLineTop(line);
                         }
+                        rectF = new RectF(0, calTop + fm.ascent,
+                                this.getActualWidth(), calTop + fm.descent + lastLine);
                         calTop += staticLayout.getHeight();
                     }else {
-                        rectF = new RectF(this.getWidth() - calWidth, calTop + fm.ascent,
-                                this.getWidth() - calWidth + width, calTop + fm.descent);
+                        rectF = new RectF(this.getActualWidth() - calWidth, calTop + fm.ascent,
+                                this.getActualWidth() - calWidth + width, calTop + fm.descent);
                         calWidth -= width;
                         textHolders.add(new TextHolder(blank.content, rectF.left, calTop));
                     }
                 }else{
-                    rectF = new RectF(this.getWidth() - calWidth, calTop + fm.ascent,
-                            this.getWidth() - calWidth + width, calTop + fm.descent);
+                    rectF = new RectF(this.getActualWidth() - calWidth, calTop + fm.ascent,
+                            this.getActualWidth() - calWidth + width, calTop + fm.descent);
                     calWidth -= width;
                     textHolders.add(new TextHolder(blank.content, rectF.left, calTop));
                 }
@@ -140,37 +151,37 @@ public class BlankTextView extends View {
             }
 
             String content = array.get(index);
-            StaticLayout staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
+            StaticLayout staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
             int lineCount = staticLayout.getLineCount();
             if (lineCount == 1) {
-                canvas.drawText(content, (this.getWidth() - calWidth),
+                canvas.drawText(content, (this.getActualWidth() - calWidth),
                         staticLayout.getLineTop(0) + calTop, textPaint);
                 calWidth -= StaticLayout.getDesiredWidth(content, textPaint);
                 if (calWidth <= 0) {
-                    calWidth = this.getWidth();
+                    calWidth = this.getActualWidth();
                     calTop += staticLayout.getHeight();
                 }
             } else if (lineCount > 1) {
-                canvas.drawText(content.substring(staticLayout.getLineStart(0), staticLayout.getLineEnd(0)), (this.getWidth() - calWidth),
+                canvas.drawText(content.substring(staticLayout.getLineStart(0), staticLayout.getLineEnd(0)), (this.getActualWidth() - calWidth),
                         staticLayout.getLineTop(0) + calTop, textPaint);
-                calTop += singleLineHeight;
-                calWidth = this.getWidth();
+                calTop += singleLineHeight + lineSpacing;
+                calWidth = this.getActualWidth();
                 content = content.substring(staticLayout.getLineEnd(0));
-                staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
+                staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
                 lineCount = staticLayout.getLineCount();
                 for (int line = 0; line < lineCount - 1; line++) {
                     canvas.drawText(content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
                             staticLayout.getLineTop(line) + calTop, textPaint);
-                    calTop += singleLineHeight;
+                    calTop += singleLineHeight + lineSpacing;
                 }
                 content = content.substring(staticLayout.getLineEnd(lineCount - 2));
-                staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
-                canvas.drawText(content, (this.getWidth() - calWidth),
+                staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
+                canvas.drawText(content, (this.getActualWidth() - calWidth),
                         staticLayout.getLineTop(0) + calTop, textPaint);
                 calWidth -= StaticLayout.getDesiredWidth(content, textPaint);
                 if (calWidth <= 0) {
-                    calWidth = this.getWidth();
-                    calTop += singleLineHeight;
+                    calWidth = this.getActualWidth();
+                    calTop += singleLineHeight + lineSpacing;
                 }
             }
         }
