@@ -85,6 +85,8 @@ public class BlankTextView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        canvas.translate(leftPadding, 0);
+
         Paint linePaint = new Paint();
         linePaint.setColor(Color.GRAY);
         linePaint.setAntiAlias(true);
