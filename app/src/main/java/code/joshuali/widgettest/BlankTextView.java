@@ -31,10 +31,7 @@ public class BlankTextView extends View {
         }
     }
 
-
-    private ArrayList<String> array = new ArrayList<String>();
-    private ArrayList<BlankItem> blankRects = new ArrayList<BlankItem>();
-
+    //可编辑属性
     float lineSpacing;
     float leftPadding, rightPadding;
     float topMargin = 0;
@@ -44,7 +41,17 @@ public class BlankTextView extends View {
     int blankColor = Color.GRAY;
     int textColor = Color.BLACK;
 
+    //内部属性
+    private ArrayList<String> array = new ArrayList<String>();
+    private ArrayList<BlankItem> blankRects = new ArrayList<BlankItem>();
+
     private float transX, transY;
+    private ArrayList<TextHolder> textHolders = new ArrayList<TextHolder>();
+    private ArrayList<RectF> blankHolders = new ArrayList<RectF>();
+
+    private Paint linePaint = new Paint();
+    private TextPaint textPaint = new TextPaint();
+    private Paint.FontMetrics fm;
 
     public BlankTextView(Context context) {
         super(context);
@@ -59,6 +66,12 @@ public class BlankTextView extends View {
     public BlankTextView(Context context, AttributeSet attributeSet, int defStyle) {
         super(context, attributeSet, defStyle);
         this.setup();
+    }
+
+    public void setTextSize (float textSize){
+        this.textSize = textSize;
+        this.requestLayout();
+        this.postInvalidate();
     }
 
     private void setup(){
@@ -76,6 +89,13 @@ public class BlankTextView extends View {
         lineSpacing = 20;
         leftPadding = 20;
         rightPadding = 20;
+        linePaint.setAntiAlias(true);
+        linePaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        textPaint.setTextSize(textSize);
+        textPaint.setColor(textColor);
+        textPaint.drawableState = getDrawableState();
+        fm = textPaint.getFontMetrics();
+
         for (int index = 0; index < array.size(); index++) {
             BlankItem blank = new BlankItem();
             blank.content = null;
@@ -89,20 +109,16 @@ public class BlankTextView extends View {
 
     private int getPreferHeight(float widthSize){
         widthSize -= leftPadding + rightPadding;
-        TextPaint textPaint = new TextPaint();
-        textPaint.setColor(textColor);
-        textPaint.setTextSize(textSize);
-        textPaint.drawableState = getDrawableState();
         float calWidth = widthSize;
-
         float calTop = 0;
-        Paint.FontMetrics fm = textPaint.getFontMetrics();
+
+        textHolders.clear();
+        blankHolders.clear();
 
         float singleLineHeight = fm.descent - fm.ascent;
         for (int index = 0; index < array.size(); index++) {
             BlankItem blank = blankRects.get(index);
             RectF rectF = new RectF();
-            ArrayList<TextHolder> textHolders = new ArrayList<TextHolder>();
             if(blank.content == null){
                 if (calWidth < blankWidth) {
                     if(calTop > topMargin || calWidth < widthSize){
@@ -145,40 +161,36 @@ public class BlankTextView extends View {
                 }
             }
             blank.rectf = rectF;
-//            canvas.drawRoundRect(rectF, blankCornerRadius, blankCornerRadius, linePaint);
-//            for(int i = 0 ; i < textHolders.size(); i ++){
-//                TextHolder holder = textHolders.get(i);
-//                canvas.drawText(holder.text, holder.x, holder.y, textPaint);
-//            }
+            blankHolders.add(rectF);
 
             String content = array.get(index);
             StaticLayout staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
             int lineCount = staticLayout.getLineCount();
             if (lineCount == 1) {
-//                canvas.drawText(content, (this.getActualWidth() - calWidth),
-//                        staticLayout.getLineTop(0) + calTop, textPaint);
+                textHolders.add(new TextHolder(content, (this.getActualWidth() - calWidth),
+                        staticLayout.getLineTop(0) + calTop));
                 calWidth -= StaticLayout.getDesiredWidth(content, textPaint);
                 if (calWidth <= 0) {
                     calWidth = widthSize;
                     calTop += staticLayout.getHeight();
                 }
             } else if (lineCount > 1) {
-//                canvas.drawText(content.substring(staticLayout.getLineStart(0), staticLayout.getLineEnd(0)), (this.getActualWidth() - calWidth),
-//                        staticLayout.getLineTop(0) + calTop, textPaint);
+                textHolders.add(new TextHolder(content.substring(staticLayout.getLineStart(0), staticLayout.getLineEnd(0)), (this.getActualWidth() - calWidth),
+                        staticLayout.getLineTop(0) + calTop));
                 calTop += singleLineHeight + lineSpacing;
                 calWidth = widthSize;
                 content = content.substring(staticLayout.getLineEnd(0));
                 staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
                 lineCount = staticLayout.getLineCount();
                 for (int line = 0; line < lineCount - 1; line++) {
-//                    canvas.drawText(content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
-//                            staticLayout.getLineTop(line) + calTop, textPaint);
+                    textHolders.add(new TextHolder(content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
+                            staticLayout.getLineTop(line) + calTop));
                     calTop += singleLineHeight + lineSpacing;
                 }
                 content = content.substring(staticLayout.getLineEnd(lineCount - 2));
                 staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
-//                canvas.drawText(content, (this.getActualWidth() - calWidth),
-//                        staticLayout.getLineTop(0) + calTop, textPaint);
+                textHolders.add(new TextHolder(content, (this.getActualWidth() - calWidth),
+                        staticLayout.getLineTop(0) + calTop));
                 calWidth -= StaticLayout.getDesiredWidth(content, textPaint);
                 if (calWidth <= 0) {
                     calWidth = widthSize;
@@ -211,114 +223,21 @@ public class BlankTextView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
 
-        Paint linePaint = new Paint();
         linePaint.setColor(blankColor);
-        linePaint.setAntiAlias(true);
-        linePaint.setStyle(Paint.Style.FILL_AND_STROKE);
-        TextPaint textPaint = new TextPaint();
         textPaint.setColor(textColor);
-        textPaint.setTextSize(textSize);
-        textPaint.drawableState = getDrawableState();
 
-        Paint.FontMetrics fm = textPaint.getFontMetrics();
+        super.onDraw(canvas);
         transX = leftPadding;
         transY = topMargin - fm.ascent;
         canvas.translate(transX, transY);
 
-
-        float calWidth = this.getActualWidth();
-
-        float calTop = 0;
-
-        float singleLineHeight = fm.descent - fm.ascent;
-        for (int index = 0; index < array.size(); index++) {
-            BlankItem blank = blankRects.get(index);
-            RectF rectF = new RectF();
-            ArrayList<TextHolder> textHolders = new ArrayList<TextHolder>();
-            if(blank.content == null){
-                if (calWidth < blankWidth) {
-                    if(calTop > topMargin || calWidth < this.getActualWidth()){
-                        calTop += singleLineHeight + lineSpacing;
-                    }
-                    calWidth = this.getActualWidth();
-                }
-                rectF = new RectF(this.getActualWidth() - calWidth, calTop + fm.ascent,
-                        this.getActualWidth() - calWidth + blankWidth, calTop + fm.descent);
-                calWidth -= blankWidth;
-            }else{
-                float width = StaticLayout.getDesiredWidth(blank.content, textPaint);
-                if(calWidth < width){
-                    if(calTop > topMargin || calWidth < this.getActualWidth()){
-                        calTop += singleLineHeight + lineSpacing;
-                    }
-                    calWidth = this.getActualWidth();
-                    if(width > this.getActualWidth()){
-                        StaticLayout staticLayout = new StaticLayout(blank.content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
-                        float lastLine = 0;
-                        for (int line = 0; line < staticLayout.getLineCount(); line++) {
-                            textHolders.add(new TextHolder(blank.content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
-                                    staticLayout.getLineTop(line) + calTop));
-                            lastLine = staticLayout.getLineTop(line);
-                        }
-                        rectF = new RectF(0, calTop + fm.ascent,
-                                this.getActualWidth(), calTop + fm.descent + lastLine);
-                        calTop += staticLayout.getHeight();
-                    }else {
-                        rectF = new RectF(this.getActualWidth() - calWidth, calTop + fm.ascent,
-                                this.getActualWidth() - calWidth + width, calTop + fm.descent);
-                        calWidth -= width;
-                        textHolders.add(new TextHolder(blank.content, rectF.left, calTop));
-                    }
-                }else{
-                    rectF = new RectF(this.getActualWidth() - calWidth, calTop + fm.ascent,
-                            this.getActualWidth() - calWidth + width, calTop + fm.descent);
-                    calWidth -= width;
-                    textHolders.add(new TextHolder(blank.content, rectF.left, calTop));
-                }
-            }
-            blank.rectf = rectF;
-            canvas.drawRoundRect(rectF, blankCornerRadius, blankCornerRadius, linePaint);
-            for(int i = 0 ; i < textHolders.size(); i ++){
-                TextHolder holder = textHolders.get(i);
-                canvas.drawText(holder.text, holder.x, holder.y, textPaint);
-            }
-
-            String content = array.get(index);
-            StaticLayout staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
-            int lineCount = staticLayout.getLineCount();
-            if (lineCount == 1) {
-                canvas.drawText(content, (this.getActualWidth() - calWidth),
-                        staticLayout.getLineTop(0) + calTop, textPaint);
-                calWidth -= StaticLayout.getDesiredWidth(content, textPaint);
-                if (calWidth <= 0) {
-                    calWidth = this.getActualWidth();
-                    calTop += staticLayout.getHeight();
-                }
-            } else if (lineCount > 1) {
-                canvas.drawText(content.substring(staticLayout.getLineStart(0), staticLayout.getLineEnd(0)), (this.getActualWidth() - calWidth),
-                        staticLayout.getLineTop(0) + calTop, textPaint);
-                calTop += singleLineHeight + lineSpacing;
-                calWidth = this.getActualWidth();
-                content = content.substring(staticLayout.getLineEnd(0));
-                staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
-                lineCount = staticLayout.getLineCount();
-                for (int line = 0; line < lineCount - 1; line++) {
-                    canvas.drawText(content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
-                            staticLayout.getLineTop(line) + calTop, textPaint);
-                    calTop += singleLineHeight + lineSpacing;
-                }
-                content = content.substring(staticLayout.getLineEnd(lineCount - 2));
-                staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, lineSpacing, false);
-                canvas.drawText(content, (this.getActualWidth() - calWidth),
-                        staticLayout.getLineTop(0) + calTop, textPaint);
-                calWidth -= StaticLayout.getDesiredWidth(content, textPaint);
-                if (calWidth <= 0) {
-                    calWidth = this.getActualWidth();
-                    calTop += singleLineHeight + lineSpacing;
-                }
-            }
+        for(int i = 0 ; i < blankHolders.size(); i ++){
+            canvas.drawRoundRect(blankHolders.get(i), blankCornerRadius, blankCornerRadius, linePaint);
+        }
+        for(int i = 0 ; i < textHolders.size(); i ++){
+            TextHolder holder = textHolders.get(i);
+            canvas.drawText(holder.text, holder.x, holder.y, textPaint);
         }
     }
 
@@ -335,6 +254,7 @@ public class BlankTextView extends View {
                     blank.content = null;
                 }
                 this.requestLayout();
+                this.postInvalidate();
                 break;
             }
         }
