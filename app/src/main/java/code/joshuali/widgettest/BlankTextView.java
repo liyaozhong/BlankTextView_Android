@@ -84,8 +84,11 @@ public class BlankTextView extends View {
         float topMargin = 100;
         float blankWidth = 150;
         float calTop = topMargin;
-        StaticLayout singleLineLayout = new StaticLayout("A", textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
-        float singleLineHeight = singleLineLayout.getHeight();
+        Paint.FontMetrics fm = textPaint.getFontMetrics();
+
+//        StaticLayout singleLineLayout = new StaticLayout("A", textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
+//        float singleLineHeight = singleLineLayout.getHeight();
+        float singleLineHeight = fm.descent - fm.ascent;
         for (int index = 0; index < array.size(); index++) {
             BlankItem blank = blankRects.get(index);
             RectF rectF = new RectF();
@@ -97,7 +100,8 @@ public class BlankTextView extends View {
                     }
                     calWidth = this.getWidth();
                 }
-                rectF = new RectF(this.getWidth() - calWidth, calTop - singleLineHeight/3*2, this.getWidth() - calWidth + blankWidth, calTop);
+                rectF = new RectF(this.getWidth() - calWidth, calTop + fm.ascent,
+                        this.getWidth() - calWidth + blankWidth, calTop + fm.descent);
                 calWidth -= blankWidth;
             }else{
                 float width = StaticLayout.getDesiredWidth(blank.content, textPaint);
@@ -108,21 +112,24 @@ public class BlankTextView extends View {
                     calWidth = this.getWidth();
                     if(width > this.getWidth()){
                         StaticLayout staticLayout = new StaticLayout(blank.content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
-                        rectF = new RectF(0, calTop - singleLineHeight / 3 * 2, this.getWidth(), calTop - singleLineHeight + staticLayout.getHeight());
+                        rectF = new RectF(0, calTop + fm.ascent,
+                                this.getWidth(), calTop + fm.ascent + staticLayout.getHeight());
                         for (int line = 0; line < staticLayout.getLineCount(); line++) {
                             textHolders.add(new TextHolder(blank.content.substring(staticLayout.getLineStart(line), staticLayout.getLineEnd(line)), 0,
                                     staticLayout.getLineTop(line) + calTop));
                         }
                         calTop += staticLayout.getHeight();
                     }else {
-                        rectF = new RectF(this.getWidth() - calWidth, calTop - singleLineHeight / 3 * 2, this.getWidth() - calWidth + width, calTop);
+                        rectF = new RectF(this.getWidth() - calWidth, calTop + fm.ascent,
+                                this.getWidth() - calWidth + width, calTop + fm.descent);
                         calWidth -= width;
-                        textHolders.add(new TextHolder(blank.content, rectF.left, rectF.bottom));
+                        textHolders.add(new TextHolder(blank.content, rectF.left, calTop));
                     }
                 }else{
-                    rectF = new RectF(this.getWidth() - calWidth, calTop - singleLineHeight/3*2, this.getWidth() - calWidth + width, calTop);
+                    rectF = new RectF(this.getWidth() - calWidth, calTop + fm.ascent,
+                            this.getWidth() - calWidth + width, calTop + fm.descent);
                     calWidth -= width;
-                    textHolders.add(new TextHolder(blank.content, rectF.left, rectF.bottom));
+                    textHolders.add(new TextHolder(blank.content, rectF.left, calTop));
                 }
             }
             blank.rectf = rectF;
