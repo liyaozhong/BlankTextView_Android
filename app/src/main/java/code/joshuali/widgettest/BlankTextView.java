@@ -35,10 +35,14 @@ public class BlankTextView extends View {
     private ArrayList<String> array = new ArrayList<String>();
     private ArrayList<BlankItem> blankRects = new ArrayList<BlankItem>();
 
-    private float lineSpacing;
-    private float leftPadding, rightPadding;
-    float topMargin = 100;
+    float lineSpacing;
+    float leftPadding, rightPadding;
+    float topMargin = 0;
     float blankWidth = 150;
+    float textSize = 30;
+    float blankCornerRadius = 5;
+    int blankColor = Color.GRAY;
+    int textColor = Color.BLACK;
 
     public BlankTextView(Context context) {
         super(context);
@@ -81,6 +85,30 @@ public class BlankTextView extends View {
         return this.getWidth() - leftPadding - rightPadding;
     }
 
+    private int getPreferHeight(){
+        return 100;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int desiredHeight = getPreferHeight();
+
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+        int width = widthSize, height;
+
+        if (heightMode == MeasureSpec.EXACTLY) {
+            height = heightSize;
+        } else if (heightMode == MeasureSpec.AT_MOST) {
+            height = Math.min(desiredHeight, heightSize);
+        } else {
+            height = desiredHeight;
+        }
+        setMeasuredDimension(width, height);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -88,11 +116,12 @@ public class BlankTextView extends View {
         canvas.translate(leftPadding, 0);
 
         Paint linePaint = new Paint();
-        linePaint.setColor(Color.GRAY);
+        linePaint.setColor(blankColor);
         linePaint.setAntiAlias(true);
         linePaint.setStyle(Paint.Style.FILL_AND_STROKE);
         TextPaint textPaint = new TextPaint();
-        textPaint.setTextSize(40);
+        textPaint.setColor(textColor);
+        textPaint.setTextSize(textSize);
         textPaint.drawableState = getDrawableState();
         float calWidth = this.getActualWidth();
 
@@ -146,7 +175,7 @@ public class BlankTextView extends View {
                 }
             }
             blank.rectf = rectF;
-            canvas.drawRoundRect(rectF, 5.0f, 5.0f, linePaint);
+            canvas.drawRoundRect(rectF, blankCornerRadius, blankCornerRadius, linePaint);
             for(int i = 0 ; i < textHolders.size(); i ++){
                 TextHolder holder = textHolders.get(i);
                 canvas.drawText(holder.text, holder.x, holder.y, textPaint);
