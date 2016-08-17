@@ -55,17 +55,14 @@ public class BlankTextView extends View {
 
     public BlankTextView(Context context) {
         super(context);
-        this.setup();
     }
 
     public BlankTextView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
-        this.setup();
     }
 
     public BlankTextView(Context context, AttributeSet attributeSet, int defStyle) {
         super(context, attributeSet, defStyle);
-        this.setup();
     }
 
     public void setTextSize (float textSize){
@@ -74,7 +71,8 @@ public class BlankTextView extends View {
         this.postInvalidate();
     }
 
-    private void setup(){
+    public void setup(){
+        array.add("");
         array.add("ehfuwh11");
         array.add("wefuhwieuf11");
         array.add("wefwef11");
@@ -101,6 +99,8 @@ public class BlankTextView extends View {
             blank.content = null;
             blankRects.add(blank);
         }
+        this.requestLayout();
+        this.postInvalidate();
     }
 
     private float getActualWidth(){
