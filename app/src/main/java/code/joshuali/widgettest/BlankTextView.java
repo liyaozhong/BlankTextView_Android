@@ -64,9 +64,10 @@ public class BlankTextView extends View {
 
         Paint linePaint = new Paint();
         linePaint.setColor(Color.BLACK);
-        linePaint.setStyle(Paint.Style.STROKE);
+        linePaint.setAntiAlias(true);
+        linePaint.setStyle(Paint.Style.FILL_AND_STROKE);
         TextPaint textPaint = new TextPaint();
-        textPaint.setTextSize(80);
+        textPaint.setTextSize(40);
         textPaint.drawableState = getDrawableState();
         float calWidth = this.getWidth();
         float topMargin = 100;
@@ -113,7 +114,7 @@ public class BlankTextView extends View {
                 }
             }
             blank.rectf = rectF;
-            canvas.drawRoundRect(rectF, 10.0f, 10.0f, linePaint);
+            canvas.drawRoundRect(rectF, 5.0f, 5.0f, linePaint);
 
             String content = array.get(index);
             StaticLayout staticLayout = new StaticLayout(content, textPaint, (int) calWidth, Layout.Alignment.ALIGN_NORMAL, 1, 0, false);
